@@ -2,6 +2,7 @@
 
 var express = require('express')
   , fs      = require('fs') // node
+  , path    = require('path') //node
   , gm      = require('gm')
   , http    = require('http') // node
   , https   = require('https') // node
@@ -16,6 +17,12 @@ var express = require('express')
     'image/gif',
     'image/jpg',
   ];
+
+app.get('/crossdomain.xml', function(req, res, next){
+    var filePath = path.join(__dirname, "crossdomain.xml");
+    var stream = fs.createReadStream(filePath);
+    stream.pipe(res);
+});
 
 app.get('/:url/:width/:height', function (req, res, next) {
   var width = req.params.width
@@ -61,10 +68,10 @@ app.get('/:url/:width/:height', function (req, res, next) {
             // Log errors in production.
             stderr.pipe(process.stderr);
             // @see http://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Expiration.html
-            res.writeHead(200, {
-              'Content-Type': mimeType,
-              'Cache-Control': 'max-age=31536000, public', // 1 year
-            });
+//            res.writeHead(200, {
+//              'Content-Type': mimeType,
+//              'Cache-Control': 'max-age=31536000, public', // 1 year
+//            });
             stdout.pipe(res);
           });
         }).on('error', next);
