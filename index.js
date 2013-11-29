@@ -21,7 +21,6 @@ var express = require('express')
 app.get('/crossdomain.xml', function(req, res, next){
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Headers", "X-Requested-With");
-    res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Content-Type", "text/xml");
     var filePath = path.join(__dirname, "crossdomain.xml");
     var stream = fs.createReadStream(filePath);
@@ -29,6 +28,9 @@ app.get('/crossdomain.xml', function(req, res, next){
 });
 
 app.get('/:url/:width/:height', function (req, res, next) {
+
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Headers", "X-Requested-With");
   var width = req.params.width
     , height = req.params.height
     , retrieve = function (remote) {
