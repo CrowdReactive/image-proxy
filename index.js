@@ -19,6 +19,10 @@ var express = require('express')
   ];
 
 app.get('/crossdomain.xml', function(req, res, next){
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Headers", "X-Requested-With");
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Content-Type", "text/xml");
     var filePath = path.join(__dirname, "crossdomain.xml");
     var stream = fs.createReadStream(filePath);
     stream.pipe(res);
