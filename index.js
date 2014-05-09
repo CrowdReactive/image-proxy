@@ -8,6 +8,8 @@ var express = require('express')
   , https   = require('https') // node
   , mime    = require('mime') // express
   , url     = require('url') // node
+  , md5     = require('MD5')
+  , glob    = require('glob')
   // @see http://aaronheckmann.posterous.com/graphicsmagick-on-heroku-with-nodejs
   , imageMagick = gm.subClass({imageMagick: true})
   , app = express.createServer(express.logger())
@@ -27,6 +29,11 @@ app.get('/crossdomain.xml', function(req, res, next){
     stream.pipe(res);
 });
 
+// Set default file extension for image/jpg
+mime.define({
+  'image/jpg': ['jpg']
+});
+
 app.get('/:url/:width/:height', function (req, res, next) {
 
     res.setHeader("Access-Control-Allow-Origin", "*");
@@ -43,6 +50,36 @@ app.get('/:url/:width/:height', function (req, res, next) {
         return res.send('Expected URI host to be non-empty', 404);
       }
 
+      // see if its cached
+      var hash = width+'x'+height+'-'+md5(remote);
+      var cachedPath = '/tmp/'+hash;
+
+      try {
+        //var fd = fs.openSync(cachedPath, 'r');
+        var files = glob.sync(cachedPath+'.*');
+        //console.log(files);
+        if(files.length){
+
+          var fr = fs.readFileSync(files[0]);
+          if(fr) {
+            console.log('Cache hit: '+files[0]);
+            //res.writeHead(304, {
+              //'Content-Type': mime.lookup(files[0]),
+              //'Cache-Control': 'max-age=31536000, public', // 1 year
+            //});
+            res.setHeader('Content-Type', mime.lookup(files[0]));
+            //var img = new Buffer(fr, 'base64');
+            return res.status(200).send(fr);
+          }
+          console.log('File not read');
+        }else {
+          console.log('Cache miss: '+cachedPath);
+        }
+      } catch (e) {
+        console.log(e);
+        //console.log('Cached file '+cachedPath+' not found');
+      }
+
       var agent = parts.protocol === 'http:' ? http : https
         // @see http://nodejs.org/api/http.html#http_http_get_options_callback
         , request = agent.get(remote, function (res2) {
@@ -53,7 +90,7 @@ app.get('/:url/:width/:height', function (req, res, next) {
 
           // The remote image must return status code 200.
           if (res2.statusCode !== 200) {
-            return res.send('Expected response code 200, got ' + res2.statusCode, 404);
+            return res.status(404).send('Expected response code 200, got ' + res2.statusCode, 404);
           }
 
           // The remote image must be a valid content type.
@@ -62,7 +99,6 @@ app.get('/:url/:width/:height', function (req, res, next) {
           if (mimeTypes.indexOf(mimeType) === -1) {
             return res.send('Expected content type ' + mimeTypes.join(', ') + ', got ' + mimeType, 404);
           }
-
           // @see https://github.com/aheckmann/gm#constructor
           imageMagick(res2, 'image.' + mime.extension(mimeType))
           // @see http://www.imagemagick.org/Usage/thumbnails/#cut
@@ -71,6 +107,7 @@ app.get('/:url/:width/:height', function (req, res, next) {
           .extent(width, height)
           .stream(function (err, stdout, stderr) {
             if (err) return next(err);
+            stdout.setMaxListeners(500);
             // Log errors in production.
             stderr.pipe(process.stderr);
             // @see http://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Expiration.html
@@ -78,6 +115,10 @@ app.get('/:url/:width/:height', function (req, res, next) {
 //              'Content-Type': mimeType,
 //              'Cache-Control': 'max-age=31536000, public', // 1 year
 //            });
+            console.log('Cache save: '+cachedPath+'.'+mime.extension(mimeType));
+            var writeStream = fs.createWriteStream(cachedPath+'.'+mime.extension(mimeType));
+
+            stdout.pipe(writeStream);
             stdout.pipe(res);
           });
         }).on('error', next);
