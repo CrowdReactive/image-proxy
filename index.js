@@ -17,7 +17,7 @@ var express = require('express')
     'image/jpeg',
     'image/png',
     'image/gif',
-    'image/jpg',
+    'image/jpg'
   ];
 
 app.get('/crossdomain.xml', function(req, res, next){
@@ -31,6 +31,7 @@ app.get('/crossdomain.xml', function(req, res, next){
 
 // Set default file extension for image/jpg
 mime.define({
+  'image/jpeg': ['jpg'],
   'image/jpg': ['jpg']
 });
 
@@ -97,8 +98,15 @@ app.get('/:url/:width/:height', function (req, res, next) {
           // @see http://nodejs.org/api/http.html#http_request_headers
           var mimeType = res2.headers['content-type'].replace(/;.+/, '');
           if (mimeTypes.indexOf(mimeType) === -1) {
+            if (mimeType == 'video/mp4') {
+              var writeStream = fs.createWriteStream(cachedPath + '.' + mime.extension(mimeType));
+              res2.pipe(writeStream);
+              return res2.pipe(res);
+            }
+
             return res.send('Expected content type ' + mimeTypes.join(', ') + ', got ' + mimeType, 404);
           }
+
           // @see https://github.com/aheckmann/gm#constructor
           imageMagick(res2, 'image.' + mime.extension(mimeType))
           // @see http://www.imagemagick.org/Usage/thumbnails/#cut
