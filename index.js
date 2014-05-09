@@ -72,7 +72,7 @@ app.get('/:url/:width/:height', function (req, res, next) {
             //});
             res.setHeader('Content-Type', mime.lookup(files[0]));
             //var img = new Buffer(fr, 'base64');
-            return res.status(304).send(fr);
+            return res.status(200).send(fr);
           }
           console.log('File not read');
         }else {
