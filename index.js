@@ -39,6 +39,7 @@ app.get('/:url/:width/:height', function (req, res, next) {
 
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Headers", "X-Requested-With");
+    res.setHeader("Cache-Control", "public, max-age: 300");
   var width = req.params.width
     , height = req.params.height
     , retrieve = function (remote) {
@@ -64,6 +65,7 @@ app.get('/:url/:width/:height', function (req, res, next) {
           var fr = fs.readFileSync(files[0]);
           if(fr) {
             console.log('Cache hit: '+files[0]);
+            res.setHeader('X-Cache', 'HIT');
             //res.writeHead(304, {
               //'Content-Type': mime.lookup(files[0]),
               //'Cache-Control': 'max-age=31536000, public', // 1 year
