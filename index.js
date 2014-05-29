@@ -35,7 +35,7 @@ mime.define({
   'image/jpg': ['jpg']
 });
 
-app.get('/:url/:width/:height', function (req, res, next) {
+app.get('/:url/:width/:height/:justCrop?', function (req, res, next) {
 
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Headers", "X-Requested-With");
@@ -110,12 +110,15 @@ app.get('/:url/:width/:height', function (req, res, next) {
           }
 
           // @see https://github.com/aheckmann/gm#constructor
-          imageMagick(res2, 'image.' + mime.extension(mimeType))
+          var final = imageMagick(res2, 'image.' + mime.extension(mimeType))
           // @see http://www.imagemagick.org/Usage/thumbnails/#cut
           .resize(width, height + '^>')
-          .gravity('Center') // faces are most often near the center
-          .extent(width, height)
-          .stream(function (err, stdout, stderr) {
+          .gravity('Center'); // faces are most often near the center
+          if (!req.params.justCrop)
+              final = final.extent(width, height);
+          else
+              console.log('Cropping only...');
+          final.stream(function (err, stdout, stderr) {
             if (err) return next(err);
             stdout.setMaxListeners(500);
             // Log errors in production.
