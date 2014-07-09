@@ -39,7 +39,7 @@ app.get('/:url/:width/:height/:justCrop?', function (req, res, next) {
 
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Headers", "X-Requested-With");
-    res.setHeader("Cache-Control", "public, max-age: 300");
+    res.setHeader("Cache-Control", "max-age=300");
   var width = req.params.width
     , height = req.params.height
     , retrieve = function (remote) {
