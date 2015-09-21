@@ -44,6 +44,10 @@ app.get('/:url/:width/:height/:justCrop?', function (req, res, next) {
     , height = req.params.height
     , retrieve = function (remote) {
       // @see http://nodejs.org/api/url.html#url_url
+      if (remote.substring(0, 2) === '//') {
+        remote = 'http:' + remote;
+      }
+
       var parts = url.parse(remote);
       if (['https:', 'http:'].indexOf(parts.protocol) === -1) {
         return res.send('Expected URI scheme to be HTTP or HTTPS', 404);
