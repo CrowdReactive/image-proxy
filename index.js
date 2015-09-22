@@ -35,7 +35,7 @@ mime.define({
   'image/jpg': ['jpg']
 });
 
-app.get('/:url/:width/:height/:justCrop?', function (req, res, next) {
+app.get('/:url/:width/:height/:noCrop/:resizing?', function (req, res, next) {
 
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Headers", "X-Requested-With");
@@ -79,7 +79,7 @@ app.get('/:url/:width/:height/:justCrop?', function (req, res, next) {
             return res.status(200).send(fr);
           }
           console.log('File not read');
-        }else {
+        } else {
           console.log('Cache miss: '+cachedPath);
         }
       } catch (e) {
@@ -113,15 +113,24 @@ app.get('/:url/:width/:height/:justCrop?', function (req, res, next) {
             return res.send('Expected content type ' + mimeTypes.join(', ') + ', got ' + mimeType, 404);
           }
 
+          // Work out the resizing method
+          var resizing = req.params.resizing;
+          var resizeFlag = '^>';
+
+          if (resizing && resizing === 'cover') {
+              resizeFlag = '^';
+          }
+
           // @see https://github.com/aheckmann/gm#constructor
           var final = imageMagick(res2, 'image.' + mime.extension(mimeType))
-          // @see http://www.imagemagick.org/Usage/thumbnails/#cut
-          .resize(width, height + '^>')
+          .resize(width, height + resizeFlag)
           .gravity('Center'); // faces are most often near the center
-          if (!req.params.justCrop)
+
+          // If there's no noCrop flag or it's set to 0, then crop to fit the canvas
+          if (!req.params.noCrop || req.params.noCrop == 0) {
               final = final.extent(width, height);
-          else
-              console.log('Cropping only...');
+          }
+
           final.stream(function (err, stdout, stderr) {
             if (err) return next(err);
             stdout.setMaxListeners(500);
