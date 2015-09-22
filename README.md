@@ -10,15 +10,15 @@ The code is just over 100 lines, making it easy to tailor to your needs.
     node index.js
     curl -I http://localhost:5000/http%3A%2F%2Fwww.opennorth.ca%2Fimg%2Fheader_logo.png/352/72
 
-The URL structure is `/:url/:width/:height/:resizing`. The `:url` parameter must be escaped/encoded. If the remote image's width or height is greater than the given `:width` or `:height`, it will be resized, maintaining aspect ratio, and cropped. If smaller, it will be padded with white pixels. The equivalent ImageMagick command is:
+The URL structure is `/:url/:width/:height/:noCrop/:resizing`. The `:url` parameter must be escaped/encoded. If the remote image's width or height is greater than the given `:width` or `:height`, it will be resized, maintaining aspect ratio, and cropped. If smaller, it will be padded with white pixels. The equivalent ImageMagick command is:
 
     convert in.jpg -thumbnail 100x100^> -gravity center -extent 100x100 out.jpg
+
+Setting `:noCrop` to 1 will keep the image extremities that fall outside the canvas area.
 
 Currently the only alternative method for resizing supported is `cover`, which works like `background-size: cover` in css.
 
 The `Cache-Control` header sets a `max-age` of one year.
-
-
 
 ## Deployment
 

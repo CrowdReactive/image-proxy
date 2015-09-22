@@ -35,7 +35,7 @@ mime.define({
   'image/jpg': ['jpg']
 });
 
-app.get('/:url/:width/:height/:resizing?', function (req, res, next) {
+app.get('/:url/:width/:height/:noCrop/:resizing?', function (req, res, next) {
 
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Headers", "X-Requested-With");
@@ -79,7 +79,7 @@ app.get('/:url/:width/:height/:resizing?', function (req, res, next) {
             return res.status(200).send(fr);
           }
           console.log('File not read');
-        }else {
+        } else {
           console.log('Cache miss: '+cachedPath);
         }
       } catch (e) {
@@ -126,7 +126,10 @@ app.get('/:url/:width/:height/:resizing?', function (req, res, next) {
           .resize(width, height + resizeFlag)
           .gravity('Center'); // faces are most often near the center
 
+          // If there's no noCrop flag or it's set to 0, then crop to fit the canvas
+          if (!req.params.noCrop || req.params.noCrop == 0) {
               final = final.extent(width, height);
+          }
 
           final.stream(function (err, stdout, stderr) {
             if (err) return next(err);
