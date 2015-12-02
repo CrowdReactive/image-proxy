@@ -17,7 +17,8 @@ var express = require('express')
     'image/jpeg',
     'image/png',
     'image/gif',
-    'image/jpg'
+    'image/jpg',
+	'video/mp4'
   ];
 
 app.get('/crossdomain.xml', function(req, res, next){
@@ -56,37 +57,6 @@ app.get('/:url/:width/:height/:noCrop?/:resizing?', function (req, res, next) {
         return res.send('Expected URI host to be non-empty', 404);
       }
 
-      // see if its cached
-      var hash = width+'x'+height+'-'+md5(remote);
-      var cachedPath = '/tmp/'+hash;
-
-      try {
-        //var fd = fs.openSync(cachedPath, 'r');
-        var files = glob.sync(cachedPath+'.*');
-        //console.log(files);
-        if(files.length){
-
-          var fr = fs.readFileSync(files[0]);
-          if(fr) {
-            console.log('Cache hit: '+files[0]);
-            res.setHeader('X-Cache', 'HIT');
-            //res.writeHead(304, {
-              //'Content-Type': mime.lookup(files[0]),
-              //'Cache-Control': 'max-age=31536000, public', // 1 year
-            //});
-            res.setHeader('Content-Type', mime.lookup(files[0]));
-            //var img = new Buffer(fr, 'base64');
-            return res.status(200).send(fr);
-          }
-          console.log('File not read');
-        } else {
-          console.log('Cache miss: '+cachedPath);
-        }
-      } catch (e) {
-        console.log(e);
-        //console.log('Cached file '+cachedPath+' not found');
-      }
-
       var agent = parts.protocol === 'http:' ? http : https
         // @see http://nodejs.org/api/http.html#http_http_get_options_callback
         , request = agent.get(remote, function (res2) {
@@ -104,12 +74,6 @@ app.get('/:url/:width/:height/:noCrop?/:resizing?', function (req, res, next) {
           // @see http://nodejs.org/api/http.html#http_request_headers
           var mimeType = res2.headers['content-type'].replace(/;.+/, '');
           if (mimeTypes.indexOf(mimeType) === -1) {
-            if (mimeType == 'video/mp4') {
-              var writeStream = fs.createWriteStream(cachedPath + '.' + mime.extension(mimeType));
-              res2.pipe(writeStream);
-              return res2.pipe(res);
-            }
-
             return res.send('Expected content type ' + mimeTypes.join(', ') + ', got ' + mimeType, 404);
           }
 
@@ -141,10 +105,6 @@ app.get('/:url/:width/:height/:noCrop?/:resizing?', function (req, res, next) {
 //              'Content-Type': mimeType,
 //              'Cache-Control': 'max-age=31536000, public', // 1 year
 //            });
-            console.log('Cache save: '+cachedPath+'.'+mime.extension(mimeType));
-            var writeStream = fs.createWriteStream(cachedPath+'.'+mime.extension(mimeType));
-
-            stdout.pipe(writeStream);
             stdout.pipe(res);
           });
         }).on('error', next);
