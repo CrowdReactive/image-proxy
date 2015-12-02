@@ -1,8 +1,13 @@
 {
   "name": "image-proxy",
-  "description": "A simple image proxy optimized for headshots",
-  "version": "0.0.1",
+  "description": "CrowdReactive's fork of github.com/opennorth/image-proxy",
+  "version": "1.0.0",
   "author": "James McKinney <james@opennorth.ca>",
+  "contributors": [
+    { "name": "Roman Schejbal" },
+    { "name": "Ross Masters" },
+    { "name": "Stephen Wilkinson" }
+  ],
   "dependencies": {
     "express": "2.5.x",
     "mime": "1.2.x",
@@ -10,10 +15,12 @@
     "MD5": "~1.2.1",
     "glob": "~4.0.0"
   },
-  "repository": "git://github.com/opennorth/image-proxy",
-  "main": "index.js",
+  "repository": "git://github.com/CrowdReactive/image-proxy",
   "engines": {
     "node": "*"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "scripts": {
+    "start": "node index.js"
+  }
 }
