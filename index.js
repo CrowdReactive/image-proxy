@@ -35,7 +35,7 @@ mime.define({
   'image/jpg': ['jpg']
 });
 
-app.get('/:url/:width/:height/:noCrop/:resizing?', function (req, res, next) {
+app.get('/:url/:width/:height/:noCrop?/:resizing?', function (req, res, next) {
 
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Headers", "X-Requested-With");
