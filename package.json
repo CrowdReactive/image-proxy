@@ -6,7 +6,8 @@
   "contributors": [
     { "name": "Roman Schejbal" },
     { "name": "Ross Masters" },
-    { "name": "Stephen Wilkinson" }
+    { "name": "Stephen Wilkinson" },
+    { "name": "Viktor Hubert" }
   ],
   "dependencies": {
     "express": "2.5.x",

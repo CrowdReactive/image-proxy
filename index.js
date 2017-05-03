@@ -74,7 +74,23 @@ app.get('/:url/:width/:height/:noCrop?/:resizing?', function (req, res, next) {
           // @see http://nodejs.org/api/http.html#http_request_headers
           var mimeType = res2.headers['content-type'].replace(/;.+/, '');
           if (mimeTypes.indexOf(mimeType) === -1) {
-            return res.send('Expected content type ' + mimeTypes.join(', ') + ', got ' + mimeType, 404);
+              if (mimeType === 'application/octet-stream') {
+                  // Handle cases where an image returns "application/octet-stream"
+                  // as it's mime type
+                  var guessedMimeType = mime.lookup(parts.href);
+                  if (guessedMimeType.indexOf('image') !== 0) {
+                      return res.send(
+                          'Expected content type ' + mimeTypes.join(', ') + ', got: ' +
+                          mimeType + '. Guessed mime based on the URL: ' +
+                          guessedMimeType,
+                          404
+                      );
+                  }
+
+                  mimeType = guessedMimeType;
+              } else {
+                  return res.send('Expected content type ' + mimeTypes.join(', ') + ', got ' + mimeType, 404);
+              }
           }
 
           // Work out the resizing method
