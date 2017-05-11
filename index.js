@@ -14,12 +14,13 @@ var express = require('express')
   , imageMagick = gm.subClass({imageMagick: true})
   , app = express.createServer(express.logger())
   , mimeTypes = [
-    'image/jpeg',
-    'image/png',
-    'image/gif',
-    'image/jpg',
-	'video/mp4'
+      'image/jpeg',
+      'image/png',
+      'image/gif',
+      'image/jpg',
+	  'video/mp4'
   ];
+
 
 app.get('/crossdomain.xml', function(req, res, next){
     res.setHeader("Access-Control-Allow-Origin", "*");
@@ -36,7 +37,7 @@ mime.define({
   'image/jpg': ['jpg']
 });
 
-app.get('/:url/:width/:height/:noCrop?/:resizing?', function (req, res, next) {
+app.get('/:url/:width?/:height?/:noCrop?/:resizing?', function (req, res, next) {
 
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Headers", "X-Requested-With");
@@ -78,7 +79,10 @@ app.get('/:url/:width/:height/:noCrop?/:resizing?', function (req, res, next) {
                   // Handle cases where an image returns "application/octet-stream"
                   // as it's mime type
                   var guessedMimeType = mime.lookup(parts.href);
-                  if (guessedMimeType.indexOf('image') !== 0) {
+                  if (
+                      guessedMimeType.indexOf('image') !== 0 &&
+                      guessedMimeType.indexOf('video') !== 0
+                  ) {
                       return res.send(
                           'Expected content type ' + mimeTypes.join(', ') + ', got: ' +
                           mimeType + '. Guessed mime based on the URL: ' +
@@ -91,6 +95,13 @@ app.get('/:url/:width/:height/:noCrop?/:resizing?', function (req, res, next) {
               } else {
                   return res.send('Expected content type ' + mimeTypes.join(', ') + ', got ' + mimeType, 404);
               }
+          }
+
+          // Stream video as is
+          if (mimeType.indexOf('video') === 0) {
+              res.setHeader("Content-Type", mimeType);
+              res2.pipe(res);
+              return;
           }
 
           // Work out the resizing method
@@ -127,7 +138,7 @@ app.get('/:url/:width/:height/:noCrop?/:resizing?', function (req, res, next) {
 
       // Timeout after five seconds. Better luck next time.
       request.setTimeout(5000, function () {
-        return res.send(504);
+          request.abort();
       });
     };
 
@@ -145,17 +156,22 @@ app.get('/:url/:width/:height/:noCrop?/:resizing?', function (req, res, next) {
       return res.send('Expected URI host to be whitelisted', 404);
     }
   }
-  if (isNaN(parseInt(width))) {
-    return res.send('Expected width to be an integer', 404);
-  }
-  if (parseInt(width) > 1000) {
-    return res.send('Expected width to be less than or equal to 1000', 404);
-  }
-  if (isNaN(parseInt(height))) {
-    return res.send('Expected height to be an integer', 404);
-  }
-  if (parseInt(height) > 1000) {
-    return res.send('Expected height to be less than or equal to 1000', 404);
+
+  // Only validate images, but not mp4 videos which don't need any of the
+  // parameters
+  if (/.mp4$/.test(req.params.url) === false) {
+      if (isNaN(parseInt(width))) {
+          return res.send('Expected width to be an integer', 404);
+      }
+      if (parseInt(width) > 1000) {
+          return res.send('Expected width to be less than or equal to 1000', 404);
+      }
+      if (isNaN(parseInt(height))) {
+          return res.send('Expected height to be an integer', 404);
+      }
+      if (parseInt(height) > 1000) {
+          return res.send('Expected height to be less than or equal to 1000', 404);
+      }
   }
 
   retrieve(req.params.url);
